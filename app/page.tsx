@@ -181,8 +181,33 @@ export default function Home() {
     }
   }
 
+  async function ngrokTest(){
+    const inputString: string = (document.getElementById("serverReference") as HTMLInputElement).value.toLowerCase()
+    
+    try{
+        const response = await fetch(`${inputString}/test`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const respJson = await response.json();
+        console.log(respJson)
+    }
+    catch (error){
+      console.log(error)
+      //setSongs([{"artist": "Test artist", "id": "1000", "name": "Test name"}, {"artist": "Test artist longer than last name", "id": "1000", "name": "Test name"}])
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 my-auto justify-center items-center font-sans dark:bg-black">
+      <p>Ensure the address to your server is correct:</p>
+      <input className="outline-2 outline-offset-2 outline-solid outline-white rounded-sm my-2" id = "serverReference"></input>
+      <button onClick = {() => ngrokTest()} className = "outline-2 outline-offset-2 outline-solid outline-white rounded-sm cursor-pointer" id = "submit-btn">Remove This Button</button>
       <Script src="https://open.spotify.com/embed/iframe-api/v1" async></Script>
       <div id = "spotify-embed-iframe" ></div>
       <div id = "app-container">
