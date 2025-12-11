@@ -63,7 +63,7 @@ export default function Home() {
           },
           body: JSON.stringify(
               {
-                mood: inputString
+                search: inputString
               })
         });
         if (!response.ok) {
@@ -97,7 +97,7 @@ export default function Home() {
             },
             body: JSON.stringify(
               {
-                search: moodVal
+                mood: moodVal
               })
           });
           if(!response.ok){
