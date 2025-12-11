@@ -97,7 +97,7 @@ export default function Home() {
             },
             body: JSON.stringify(
               {
-                mood: moodVal
+                search: moodVal
               })
           });
           if(!response.ok){
