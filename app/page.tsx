@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import SongComp from "./SongComp";
 import { Song } from "./Song";
 import Script from "next/script";
+import Link from 'next/link';
 
 interface SpotifyIFrameAPI {
     createController(
@@ -31,6 +32,7 @@ export default function Home() {
   const [playingSong, setPlayingSong] = useState<string>("")
   const spotifyControllerRef = useRef<any>(null)
   const [searchStarted, setSearchStarted] = useState<boolean>(false)
+  const [serverAddress, setServerAddress] = useState<string>("")
 
   useEffect(() => { //TODO: switch fetchSearchableSongs to a method where it happens on click and gets the string from input box and then returns songs and does basically same thing
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
@@ -50,17 +52,19 @@ export default function Home() {
   }, [])
 
   async function filterSearchable(){
+    //const addressString: string = (document.getElementById("serverReference") as HTMLInputElement).value.toLowerCase()
     const inputString: string = (document.getElementById("songInput") as HTMLInputElement).value.toLowerCase()
     
     try{
-        const response = await fetch("http://localhost:5000/searchSongs", {
+        const response = await fetch(`${serverAddress}/searchSongs`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            'ngrok-skip-browser-warning': "true"
           },
           body: JSON.stringify(
               {
-                mood: inputString
+                search: inputString
               })
         });
         if (!response.ok) {
@@ -80,15 +84,17 @@ export default function Home() {
   }
   
   async function onClick(){
+    //const addressString: string = (document.getElementById("serverReference") as HTMLInputElement).value.toLowerCase()
     const moodEl: HTMLInputElement = document.getElementById("mood") as HTMLInputElement
     let moodVal = parseInt(moodEl.value) / 100
     console.log(moodVal)
     try{
         if(songChosen){
-          let response = await fetch("http://localhost:5000/adjust_mood", {
+          let response = await fetch(`${serverAddress}/adjust_mood`, {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
+              'ngrok-skip-browser-warning': "true"
             },
             body: JSON.stringify(
               {
@@ -101,16 +107,17 @@ export default function Home() {
           //setError(false)
           const respJson = await response.json()
           console.log(respJson)
-          setSongs(respJson["recommendations"])
+          setSongs(respJson)
       }
       else{
         console.log("moodVal: ", moodVal)
         console.log("songId: ", chosenSong)
         if(chosenSong !== ""){
-          let response = await fetch("http://localhost:5000/recommend", {
+          let response = await fetch(`${serverAddress}/recommend`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                'ngrok-skip-browser-warning': "true"
               },
               body: JSON.stringify(
                 {
@@ -124,7 +131,7 @@ export default function Home() {
             //setError(false)
             const respJson = await response.json()
             console.log(respJson)
-            setSongs(respJson["recommendations"])
+            setSongs(respJson)
         }
         setSongChosen(true)
       }
@@ -149,20 +156,22 @@ export default function Home() {
   }
 
   async function onLikeOrSkip(evt: React.MouseEvent<HTMLButtonElement>){
+    //const addressString: string = (document.getElementById("serverReference") as HTMLInputElement).value.toLowerCase()
     const clickedElement = evt.target as HTMLButtonElement;
     console.log(clickedElement)
     let elId: string = clickedElement.id
     console.log(elId)
     try{
-        const response = await fetch("http://localhost:5000/feedback", {
+        const response = await fetch(`${serverAddress}/likeOrSkip`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            'ngrok-skip-browser-warning': "true"
           },
           body: JSON.stringify(
             {
-              likeOrSkip: elId,
-              trackIndex: playingSong
+              liked: elId,
+              song: playingSong
             })
         });
         if(!response.ok){
@@ -181,8 +190,40 @@ export default function Home() {
     }
   }
 
+  function onSaveAddressClick(){
+    const addressString: string = (document.getElementById("serverReference") as HTMLInputElement).value.toLowerCase()
+    setServerAddress(addressString)
+  }
+
+  // async function ngrokTest(){
+  //   const addressString: string = (document.getElementById("serverReference") as HTMLInputElement).value.toLowerCase()
+    
+  //   try{
+  //       const response = await fetch(`${inputString}/test`, {
+  //       method: "GET",
+  //       headers: {
+  //           "Content-Type": "application/json",
+  //           'ngrok-skip-browser-warning': "true"
+  //         }
+  //       });
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! status: ${response.status}`);
+  //       }
+  //       const respJson = await response.json();
+  //       console.log(respJson)
+  //   }
+  //   catch (error){
+  //     console.log(error)
+  //     //setSongs([{"artist": "Test artist", "id": "1000", "name": "Test name"}, {"artist": "Test artist longer than last name", "id": "1000", "name": "Test name"}])
+  //   }
+  // }
+
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 my-auto justify-center items-center font-sans dark:bg-black">
+      <Link href={"https://github.com/seungho715/CS-547-Final"}>GitHub Page</Link>
+      <p>Ensure the address to your server is correct:</p>
+      <input placeholder = {serverAddress} className="outline-2 outline-offset-2 outline-solid outline-white rounded-sm my-2" id = "serverReference"></input>
+      <button onClick = {() => onSaveAddressClick()} className = "outline-2 outline-offset-2 outline-solid outline-white rounded-sm cursor-pointer" id = "saveAddress">Save Address</button>
       <Script src="https://open.spotify.com/embed/iframe-api/v1" async></Script>
       <div id = "spotify-embed-iframe" ></div>
       <div id = "app-container">
@@ -226,7 +267,7 @@ export default function Home() {
           </div>
           {playingSong !== "" &&
             <div className = "flex flex-row justify-center items-center">
-              <button onClick = {onLikeOrSkip} className="outline-2 outline-offset-2 outline-solid outline-white rounded-sm cursor-pointer my-2 mx-3" id = "like">Like</button>
+              <button onClick = {onLikeOrSkip} className="outline-2 outline-offset-2 outline-solid outline-white rounded-sm cursor-pointer my-2 mx-3" id = "full">Like</button>
               <button onClick = {onLikeOrSkip} className="outline-2 outline-offset-2 outline-solid outline-white rounded-sm cursor-pointer my-2" id = "skip">Skip</button>
             </div>
           }
